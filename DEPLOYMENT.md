@@ -94,7 +94,7 @@ Replace every `CHANGE_ME` value, especially:
 
 - `POSTGRES_PASSWORD`
 - `TRENDYOL_API_KEY` and `TRENDYOL_API_SECRET`
-- `HEPSIBURADA_USERNAME` and `HEPSIBURADA_PASSWORD`
+- `HEPSIBURADA_USERNAME` and `HEPSIBURADA_SECRET_KEY` (existing `HEPSIBURADA_PASSWORD` values remain supported)
 - AWS/S3 credentials and public image URL
 - `DEFAULT_TENANT_ID`
 
@@ -111,7 +111,7 @@ The compose stack starts:
 - `postgres`: persistent PostgreSQL database
 - `redis`: persistent Redis queue/cache service
 - `api`: FastAPI application
-- `scheduler`: background order polling and inventory synchronization
+- `scheduler`: APScheduler worker that immediately polls orders, then synchronizes changed stock across marketplaces every 900 seconds by default. Set `MARKETPLACE_POLL_INTERVAL_SECONDS` to change the interval.
 - `frontend`: React production build served by Nginx
 
 The public HTTP port is `80`; PostgreSQL and Redis remain private on the Docker network.

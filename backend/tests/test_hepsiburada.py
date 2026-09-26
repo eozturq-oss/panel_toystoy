@@ -4,6 +4,7 @@ import base64
 
 import httpx
 import pytest
+from pydantic import SecretStr
 
 from app.config import Settings
 from app.integrations.hepsiburada import HepsiburadaClient
@@ -52,6 +53,64 @@ async def test_hepsiburada_bulk_inventory_uses_basic_auth_and_merchant_path() ->
     assert captured["authorization"] == "Basic " + base64.b64encode(b"hb-user:hb-secret").decode()
 
 
+@pytest.mark.asyncio
+async def test_list_products_filters_by_merchant_sku() -> None:
+    captured: dict[str, str] = {}
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        captured["path"] = request.url.path
+        captured["merchant_sku"] = request.url.params["merchantSku"]
+        return httpx.Response(200, json={"products": [{"merchantSku": "SKU-1"}]})
+
+    client = HepsiburadaClient(settings())
+    await client._client.aclose()
+    client._client = httpx.AsyncClient(
+        base_url="https://example.test",
+        transport=httpx.MockTransport(handler),
+    )
+
+    result = await client.list_products(merchant_sku="SKU-1")
+    await client.close()
+
+    assert result["products"] == [{"merchantSku": "SKU-1"}]
+    assert captured == {
+        "path": "/listings/merchantid/merchant-1/products",
+        "merchant_sku": "SKU-1",
+    }
+
+
+@pytest.mark.asyncio
+async def test_secret_key_and_merchant_id_can_supply_basic_auth() -> None:
+    captured: dict[str, str] = {}
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        captured["authorization"] = request.headers["Authorization"]
+        return httpx.Response(200, json={"products": []})
+
+    config = settings().model_copy(
+        update={
+            "hepsiburada_username": None,
+            "hepsiburada_password": None,
+            "hepsiburada_secret_key": SecretStr("hb-key"),
+        }
+    )
+    client = HepsiburadaClient(config)
+    auth = client._client._auth
+    await client._client.aclose()
+    client._client = httpx.AsyncClient(
+        base_url="https://example.test",
+        transport=httpx.MockTransport(handler),
+        auth=auth,
+    )
+
+    await client.list_products()
+    await client.close()
+
+    assert captured["authorization"] == "Basic " + base64.b64encode(
+        b"merchant-1:hb-key"
+    ).decode()
+
+
 def test_maps_required_toy_attributes_to_hepsiburada_name_value_format() -> None:
     result = map_toy_attributes(
         category_id="TOY-CONSTRUCTION",
@@ -67,7 +126,7 @@ def test_maps_required_toy_attributes_to_hepsiburada_name_value_format() -> None
         "attributes": [
             {"name": "Yaş Grubu", "value": "3-6 Yaş"},
             {"name": "Cinsiyet", "value": "Unisex"},
-            {"name": "CE Uygunluk", "value": "Evet"},
+            {"name": "CE Sertifika Bilgisi", "value": "Evet"},
             {"name": "Parça Sayısı", "value": "60"},
             {"name": "Materyal", "value": "ABS Plastik"},
         ],

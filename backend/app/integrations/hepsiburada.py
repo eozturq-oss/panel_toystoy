@@ -24,20 +24,14 @@ class HepsiburadaClient(MarketplaceClient):
 
     def __init__(self, settings: Settings | None = None) -> None:
         self.settings = settings or get_settings()
-        missing = (
-            "hepsiburada_merchant_id",
-            "hepsiburada_username",
-            "hepsiburada_password",
-        )
-        if any(getattr(self.settings, name) in (None, "") for name in missing):
-            raise ValueError("Hepsiburada merchant ID, username and password are required")
+        username = self.settings.hepsiburada_username or self.settings.hepsiburada_merchant_id
+        secret_key = self.settings.hepsiburada_secret_key or self.settings.hepsiburada_password
+        if not self.settings.hepsiburada_merchant_id or not username or not secret_key:
+            raise ValueError("Hepsiburada merchant ID and secret key are required")
 
         self._client = httpx.AsyncClient(
             base_url=self.settings.hepsiburada_base_url.rstrip("/"),
-            auth=(
-                self.settings.hepsiburada_username or "",
-                (self.settings.hepsiburada_password or "").get_secret_value(),
-            ),
+            auth=(username, secret_key.get_secret_value()),
             headers={"Accept": "application/json", "Content-Type": "application/json"},
             timeout=self.settings.hepsiburada_timeout_seconds,
         )
@@ -51,6 +45,14 @@ class HepsiburadaClient(MarketplaceClient):
             resource_name="create products",
         )
         return self._batch_id(response)
+
+    async def list_products(self, *, merchant_sku: str | None = None) -> dict[str, Any]:
+        params = {"merchantSku": merchant_sku} if merchant_sku else None
+        return await self._get_json(
+            self.products_path.format(merchant_id=self.settings.hepsiburada_merchant_id),
+            resource_name="products",
+            params=params,
+        )
 
     async def update_price_and_inventory(self, payload: Mapping[str, Any]) -> str:
         if self.settings.marketplace_dry_run:

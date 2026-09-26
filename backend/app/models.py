@@ -37,7 +37,7 @@ class Product(Base):
     piece_count: Mapped[int] = mapped_column(Integer, nullable=False)
     ce_compliant: Mapped[bool] = mapped_column(Boolean, nullable=False)
     vat_rate: Mapped[Decimal] = mapped_column(Numeric(5, 2), nullable=False, default=Decimal("20.00"))
-    safety_warning: Mapped[str | None] = mapped_column(Text)
+    safety_warning: Mapped[str] = mapped_column(Text, nullable=False, default="Uyarı belirtilmedi.")
     attributes: Mapped[dict[str, Any]] = mapped_column(JsonType, default=dict, nullable=False)
 
     variants: Mapped[list[ProductVariant]] = relationship(

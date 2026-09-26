@@ -15,6 +15,7 @@ class Settings(BaseSettings):
     hepsiburada_merchant_id: str | None = None
     hepsiburada_username: str | None = None
     hepsiburada_password: SecretStr | None = None
+    hepsiburada_secret_key: SecretStr | None = None
     hepsiburada_base_url: str = "https://listing-external.hepsiburada.com"
     hepsiburada_timeout_seconds: float = 30.0
     marketplace_dry_run: bool = False

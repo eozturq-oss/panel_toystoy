@@ -12,6 +12,9 @@ class TrendyolMappingError(ValueError):
 DEFAULT_ATTRIBUTE_ALIASES: dict[str, tuple[str, ...]] = {
     "age_group": ("Yaş Grubu", "Minimum Yaş", "Yaş"),
     "gender": ("Cinsiyet",),
+    "material": ("Materyal", "Malzeme"),
+    "ce_compliant": ("CE Uygunluk", "CE Belgesi", "CE"),
+    "safety_warning": ("Uyarı Metni", "Uyarılar", "Güvenlik Uyarısı"),
 }
 
 

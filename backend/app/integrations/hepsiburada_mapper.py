@@ -11,9 +11,10 @@ class HepsiburadaMappingError(ValueError):
 DEFAULT_TOY_ATTRIBUTE_NAMES = {
     "age_group": "Yaş Grubu",
     "gender": "Cinsiyet",
-    "ce_compliant": "CE Uygunluk",
+    "ce_compliant": "CE Sertifika Bilgisi",
     "piece_count": "Parça Sayısı",
     "material": "Materyal",
+    "safety_warning": "Uyarı Metni",
 }
 
 
@@ -39,6 +40,8 @@ class HepsiburadaToyMapper:
             "piece_count": product.get("piece_count"),
             "material": product.get("material"),
         }
+        if "safety_warning" in product:
+            values["safety_warning"] = product.get("safety_warning")
         if extra_attributes:
             values.update(extra_attributes)
 
